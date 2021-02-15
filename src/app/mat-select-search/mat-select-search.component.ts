@@ -24,17 +24,17 @@ import {
   ViewChild
 } from '@angular/core';
 import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { _countGroupLabelsBeforeOption, MatOption } from '@angular/material/core';
-import { MatSelect, SELECT_PANEL_MAX_HEIGHT } from '@angular/material/select';
-import { MatFormField } from '@angular/material/form-field';
-import { A, DOWN_ARROW, END, ENTER, ESCAPE, HOME, NINE, SPACE, UP_ARROW, Z, ZERO, } from '@angular/cdk/keycodes';
-import { ViewportRuler } from '@angular/cdk/scrolling';
-import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { BehaviorSubject, combineLatest, Observable, of, Subject } from 'rxjs';
 import { delay, filter, map, startWith, switchMap, take, takeUntil, tap } from 'rxjs/operators';
 
 import { MatSelectSearchClearDirective } from './mat-select-search-clear.directive';
 import { ThrowStmt } from '@angular/compiler';
+import { LiveAnnouncer } from '@angular/cdk/a11y';
+import { A, Z, ZERO, NINE, SPACE, HOME, END, ENTER, ESCAPE, UP_ARROW, DOWN_ARROW } from '@angular/cdk/keycodes';
+import { ViewportRuler } from '@angular/cdk/overlay';
+import { MatOption, _countGroupLabelsBeforeOption } from '@angular/material/core';
+import { MatFormField } from '@angular/material/form-field';
+import { MatSelect, SELECT_PANEL_MAX_HEIGHT } from '@angular/material/select';
 
 /* tslint:disable:member-ordering component-selector */
 /**
