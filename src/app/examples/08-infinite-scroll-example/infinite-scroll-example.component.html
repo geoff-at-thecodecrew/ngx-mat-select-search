@@ -10,10 +10,12 @@
               msInfiniteScroll
               (infiniteScroll)="getNextBatch()"
               [formControl]="bankCtrl"
+              [ngxMatSelectSearchTrigger]='searchSelect'
               placeholder="Select Something">
     <mat-option>
       <!--disableScrollToActiveOnOptionsChanged should be set to true-->
       <ngx-mat-select-search
+        #searchSelect
         [formControl]="searchCtrl"
         placeholderLabel="search"
         [disableScrollToActiveOnOptionsChanged]="true"

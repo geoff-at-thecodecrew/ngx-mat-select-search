@@ -1,9 +1,9 @@
 <h3>Single selection</h3>
 <p>
   <mat-form-field>
-    <mat-select [formControl]="bankCtrl" placeholder="Bank" #singleSelect>
+    <mat-select [formControl]="bankCtrl" placeholder="Bank" #singleSelect [ngxMatSelectSearchTrigger]='searchSelect'>
       <mat-option>
-        <ngx-mat-select-search [formControl]="bankFilterCtrl"></ngx-mat-select-search>
+        <ngx-mat-select-search #searchSelect [formControl]="bankFilterCtrl"></ngx-mat-select-search>
       </mat-option>
 
       <mat-option *ngFor="let bank of filteredBanks | async" [value]="bank">

@@ -34,6 +34,7 @@ import { BehaviorSubject, combineLatest, Observable, of, Subject } from 'rxjs';
 import { delay, filter, map, startWith, switchMap, take, takeUntil, tap } from 'rxjs/operators';
 
 import { MatSelectSearchClearDirective } from './mat-select-search-clear.directive';
+import { ThrowStmt } from '@angular/compiler';
 
 /* tslint:disable:member-ordering component-selector */
 /**
@@ -130,13 +131,13 @@ import { MatSelectSearchClearDirective } from './mat-select-search-clear.directi
 export class MatSelectSearchComponent implements OnInit, OnDestroy, ControlValueAccessor {
 
   /** Label of the search placeholder */
-  @Input() placeholderLabel = 'Suche';
+  @Input() placeholderLabel = 'Search';
 
   /** Type of the search input field */
   @Input() type = 'text';
 
   /** Label to be shown when no entries are found. Set to null if no message should be shown. */
-  @Input() noEntriesFoundLabel = 'Keine Optionen gefunden';
+  @Input() noEntriesFoundLabel = 'No matching entries';
 
   /**
    *  Text that is appended to the currently active item label announced by screen readers,
@@ -278,6 +279,7 @@ export class MatSelectSearchComponent implements OnInit, OnDestroy, ControlValue
     } else {
       this.matSelect.panelClass = panelClass;
     }
+    
 
     // set custom mat-option class if the component was placed inside a mat-option
     if (this.matOption) {
@@ -663,6 +665,14 @@ export class MatSelectSearchComponent implements OnInit, OnDestroy, ControlValue
     } else {
       return 0;
     }
+  }
+
+  public externalTrigger(event: KeyboardEvent) {
+     console.log(event);
+     // if keys are characters then initialise search text
+     this.matSelect.open();
+     this._formControl.setValue(event.key);
+     //this.searchSelectInput.event.key
   }
 
 }
