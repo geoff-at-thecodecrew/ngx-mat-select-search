@@ -3,6 +3,10 @@
 <p>
   <mat-form-field>
     <mat-select [formControl]="bankMultiCtrl" placeholder="Banks" [multiple]="true" #multiSelect [ngxMatSelectSearchTrigger]='searchSelect'>
+      <mat-select-trigger>
+         <ng-container *ngIf='multiSelect.value?.length > 1'>{{multiSelect.value?.length}} selected</ng-container>
+         <ng-container *ngIf='multiSelect.value?.length === 1'>{{multiSelect.value[0].name}} </ng-container>         
+       </mat-select-trigger>
       <mat-option>
         <ngx-mat-select-search #searchSelect [formControl]="bankMultiFilterCtrl"></ngx-mat-select-search>
       </mat-option>
