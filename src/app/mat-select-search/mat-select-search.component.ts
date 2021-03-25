@@ -336,7 +336,7 @@ export class MatSelectSearchComponent implements OnInit, OnDestroy, ControlValue
         // when options are appended, but allows the first item
         // in the list to be set as active by default when there
         // is no active selection
-        let previousFirstOption = this._options.toArray()[this.getOptionsLengthOffset()];
+      //   let previousFirstOption = this._options.toArray()[this.getOptionsLengthOffset()];
 
         this._options.changes
           .pipe(
@@ -345,28 +345,9 @@ export class MatSelectSearchComponent implements OnInit, OnDestroy, ControlValue
           .subscribe(() => {
             // avoid "expression has been changed" error
             setTimeout(() => {
-              // Convert the QueryList to an array
-              const options = this._options.toArray();
+            if (this.matSelect.panelOpen) {
 
-              // The true first item is offset by 1
-              const currentFirstOption = options[this.getOptionsLengthOffset()];
-
-              const keyManager = this.matSelect._keyManager;
-              if (keyManager && this.matSelect.panelOpen) {
-
-                // set first item active and input width
-
-                // Check to see if the first option in these changes is different from the previous.
-                const firstOptionIsChanged = !this.matSelect.compareWith(previousFirstOption, currentFirstOption);
-
-                // CASE: The first option is different now.
-                // Indiciates we should set it as active and scroll to the top.
-                if (firstOptionIsChanged
-                  || !keyManager.activeItem
-                  || !options.find(option => this.matSelect.compareWith(option, keyManager.activeItem))) {
-                  keyManager.setFirstItemActive();
-                }
-
+            
                 // wait for panel width changes
                 setTimeout(() => {
                   this.updateInputWidth();
@@ -377,8 +358,6 @@ export class MatSelectSearchComponent implements OnInit, OnDestroy, ControlValue
                 }
               }
 
-              // Update our reference
-              previousFirstOption = currentFirstOption;
             });
           });
       });
