@@ -649,8 +649,8 @@ export class MatSelectSearchComponent implements OnInit, OnDestroy, ControlValue
   public externalTrigger(event: KeyboardEvent) {
      console.log(event);
      // if keys are characters then initialise search text
-     this.matSelect.open();
-     this._formControl.setValue(event.key);
+     this.matSelect.open();     
+     this._formControl.setValue(this._formControl.value + event.key);
      //this.searchSelectInput.event.key
   }
 
