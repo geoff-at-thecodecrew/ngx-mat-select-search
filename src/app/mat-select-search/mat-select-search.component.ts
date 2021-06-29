@@ -193,6 +193,8 @@ export class MatSelectSearchComponent implements OnInit, OnDestroy, ControlValue
   /** Show/Hide the search clear button of the search input */
   @Input() hideClearSearchButton = false;
 
+  @Input() scrollElementClass: string = null;
+
   /** Output emitter to send to parent component with the toggle all boolean */
   @Output() toggleAll = new EventEmitter<boolean>();
 
@@ -304,6 +306,7 @@ export class MatSelectSearchComponent implements OnInit, OnDestroy, ControlValue
           if (!this.disableInitialFocus) {
             this._focus();
           }
+          this.adjustScrollTopToFitActiveOptionIntoView(); // scroll into view every time we open it, not just the first time
         } else {
           // clear it when closing
           if (this.clearSearchInput) {
@@ -516,10 +519,17 @@ export class MatSelectSearchComponent implements OnInit, OnDestroy, ControlValue
     const panel = this.matSelect.panel.nativeElement;
     const scrollTop = panel.scrollTop;
 
+    const panel2 = this.scrollElementClass ? this.matSelect.panel.nativeElement.querySelector('.' + this.scrollElementClass) as HTMLElement : null;
+    const scrollTop2 = panel2?.scrollTop;
+
     // focus
     this.searchSelectInput.nativeElement.focus();
 
     panel.scrollTop = scrollTop;
+    if(panel2)
+    {
+      panel2.scrollTop = scrollTop2;
+    }
   }
 
   /**
@@ -585,25 +595,84 @@ export class MatSelectSearchComponent implements OnInit, OnDestroy, ControlValue
   /**
    * Scrolls the currently active option into the view if it is not yet visible.
    */
-  private adjustScrollTopToFitActiveOptionIntoView(): void {
-    if (this.matSelect.panel && this.matSelect.options.length > 0) {
-      const matOptionHeight = this.getMatOptionHeight();
+  private adjustScrollTopToFitActiveOptionIntoView(): void 
+  {
+    if (this.matSelect.panel && this.matSelect.options.length > 0) 
+    {
+      const matOptionHeight = this.getMatOptionHeight() + 2;  // option height is 42 not 40 due to border
       const activeOptionIndex = this.matSelect._keyManager.activeItemIndex || 0;
       const labelCount = _countGroupLabelsBeforeOption(activeOptionIndex, this.matSelect.options, this.matSelect.optionGroups);
       // If the component is in a MatOption, the activeItemIndex will be offset by one.
       const indexOfOptionToFitIntoView = (this.matOption ? -1 : 0) + labelCount + activeOptionIndex;
-      const currentScrollTop = this.matSelect.panel.nativeElement.scrollTop;
-
       const searchInputHeight = this.innerSelectSearch.nativeElement.offsetHeight;
       const amountOfVisibleOptions = Math.floor((SELECT_PANEL_MAX_HEIGHT - searchInputHeight) / matOptionHeight);
 
-      const indexOfFirstVisibleOption = Math.round((currentScrollTop + searchInputHeight) / matOptionHeight) - 1;
+   
+      if( this.scrollElementClass )
+      {
+        this.matSelect.panel.nativeElement.scrollTop = 0;
+        console.log('this.scrollElementClass', this.scrollElementClass);
+        const panel = this.matSelect.panel.nativeElement.querySelector('.' + this.scrollElementClass) as HTMLElement;
 
-      if (indexOfFirstVisibleOption >= indexOfOptionToFitIntoView) {
-        this.matSelect.panel.nativeElement.scrollTop = indexOfOptionToFitIntoView * matOptionHeight;
-      } else if (indexOfFirstVisibleOption + amountOfVisibleOptions <= indexOfOptionToFitIntoView) {
-        this.matSelect.panel.nativeElement.scrollTop = (indexOfOptionToFitIntoView + 1) * matOptionHeight
-          - (SELECT_PANEL_MAX_HEIGHT - searchInputHeight);
+        const currentScrollTop = panel.scrollTop;
+
+        const indexOfFirstVisibleOption = Math.round(currentScrollTop / matOptionHeight);
+
+        console.log('matOptionHeight', matOptionHeight);
+        console.log('activeOptionIndex',activeOptionIndex);
+        console.log('labelCount',labelCount);
+        console.log('indexOfOptionToFitIntoView',indexOfOptionToFitIntoView);
+        console.log('currentScrollTop',currentScrollTop);
+        console.log('amountOfVisibleOptions',amountOfVisibleOptions);
+        console.log('indexOfFirstVisibleOption',indexOfFirstVisibleOption);
+        console.log('scroll1', (indexOfOptionToFitIntoView * matOptionHeight));
+        console.log('scroll2', ((indexOfOptionToFitIntoView + 1) * matOptionHeight - SELECT_PANEL_MAX_HEIGHT));
+
+        let requiredScrollTop = 0;
+        if (indexOfFirstVisibleOption >= indexOfOptionToFitIntoView) 
+        {
+          requiredScrollTop = indexOfOptionToFitIntoView * matOptionHeight;
+        } 
+        else if (indexOfFirstVisibleOption + amountOfVisibleOptions <= indexOfOptionToFitIntoView) 
+        {
+          requiredScrollTop = (indexOfOptionToFitIntoView + 1) * matOptionHeight - SELECT_PANEL_MAX_HEIGHT;
+        }
+
+        panel.scrollTop = requiredScrollTop;
+        // above doesn't work, try again ...
+        console.log('panel.scrollTop', panel.scrollTop);
+        setTimeout( () => {
+          if(panel.scrollTop != requiredScrollTop)
+          {
+            panel.scrollTop = requiredScrollTop;
+            console.log('panel.scrollTop', panel.scrollTop);
+          }
+        }, 1);
+
+        // setTimeout( () => {
+        //   if(panel.scrollTop != requiredScrollTop)
+        //   {
+        //     panel.scrollTop = requiredScrollTop;
+        //     console.log('panel.scrollTop', panel.scrollTop);
+        //   }
+        // }, 100);
+      }
+      else
+      {
+        // This is when the search box is included in the scroll
+        const currentScrollTop = this.matSelect.panel.nativeElement.scrollTop;
+
+        const indexOfFirstVisibleOption = Math.round((currentScrollTop + searchInputHeight) / matOptionHeight) - 1;
+
+        if (indexOfFirstVisibleOption >= indexOfOptionToFitIntoView) 
+        {
+          this.matSelect.panel.nativeElement.scrollTop = indexOfOptionToFitIntoView * matOptionHeight;
+        } 
+        else if (indexOfFirstVisibleOption + amountOfVisibleOptions <= indexOfOptionToFitIntoView) 
+        {
+          this.matSelect.panel.nativeElement.scrollTop = (indexOfOptionToFitIntoView + 1) * matOptionHeight
+            - (SELECT_PANEL_MAX_HEIGHT - searchInputHeight);
+        }
       }
     }
   }
