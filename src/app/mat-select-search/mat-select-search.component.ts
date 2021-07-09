@@ -414,12 +414,32 @@ export class MatSelectSearchComponent implements OnInit, OnDestroy, ControlValue
     return this.matSelect.multiple && this.showToggleAllCheckbox;
   }
 
+  onCtrlPage(event: KeyboardEvent)
+  {
+    console.log('onCtrlPage',event);
+    // Treat Ctrl-PageUp and Ctrl-PageDown as PageUp/PageDown
+    if(event.key && event.ctrlKey && (event.key === 'PageUp' || event.key === 'PageDown'))
+    {
+      event.currentTarget.dispatchEvent( new KeyboardEvent( 'keydown', { key: event.key }) ); 
+      event.stopPropagation();
+    }
+  }
+
   /**
    * Handles the key down event with MatSelect.
    * Allows e.g. selecting with enter key, navigation with arrow keys, etc.
    * @param event
    */
   _handleKeydown(event: KeyboardEvent) {
+
+    // ctrl-space to toggle select all
+    if( this.matSelect.multiple && event.key && event.ctrlKey && event.key === ' ')
+    {
+      this.toggleAllCheckboxChecked = !this.toggleAllCheckboxChecked;
+      this.toggleAll.emit(this.toggleAllCheckboxChecked);
+      event.stopPropagation();
+    }
+
     // Prevent propagation for all alphanumeric characters in order to avoid selection issues
     if ((event.key && event.key.length === 1) ||
       (event.keyCode >= A && event.keyCode <= Z) ||
@@ -572,16 +592,17 @@ export class MatSelectSearchComponent implements OnInit, OnDestroy, ControlValue
             if (!values || !Array.isArray(values)) {
               values = [];
             }
-            const optionValues = this.matSelect.options.map(option => option.value);
-            this.previousSelectedValues.forEach(previousValue => {
-              if (!values.some(v => this.matSelect.compareWith(v, previousValue))
-                && !optionValues.some(v => this.matSelect.compareWith(v, previousValue))) {
-                // if a value that was selected before is deselected and not found in the options, it was deselected
-                // due to the filtering, so we restore it.
-                values.push(previousValue);
-                restoreSelectedValues = true;
-              }
-            });
+          // this gets in an infinite loop if you deselect all
+          // const optionValues = this.matSelect.options.map(option => option.value);
+          //   this.previousSelectedValues.forEach(previousValue => {
+          //     if (!values.some(v => this.matSelect.compareWith(v, previousValue))
+          //       && !optionValues.some(v => this.matSelect.compareWith(v, previousValue))) {
+          //       // if a value that was selected before is deselected and not found in the options, it was deselected
+          //       // due to the filtering, so we restore it.
+          //       values.push(previousValue);
+          //       restoreSelectedValues = true;
+          //     }
+          //   });
           }
         }
         this.previousSelectedValues = values;
@@ -599,11 +620,11 @@ export class MatSelectSearchComponent implements OnInit, OnDestroy, ControlValue
   {
     if (this.matSelect.panel && this.matSelect.options.length > 0) 
     {
-      const matOptionHeight = this.getMatOptionHeight() + 2;  // option height is 42 not 40 due to border
+      const matOptionHeight = this.getMatOptionHeight();
       const activeOptionIndex = this.matSelect._keyManager.activeItemIndex || 0;
       const labelCount = _countGroupLabelsBeforeOption(activeOptionIndex, this.matSelect.options, this.matSelect.optionGroups);
       // If the component is in a MatOption, the activeItemIndex will be offset by one.
-      const indexOfOptionToFitIntoView = (this.matOption ? -1 : 0) + labelCount + activeOptionIndex;
+      const indexOfOptionToFitIntoView = ((this.matOption && !this.scrollElementClass) ? -1 : 0) + labelCount + activeOptionIndex;
       const searchInputHeight = this.innerSelectSearch.nativeElement.offsetHeight;
       const amountOfVisibleOptions = Math.floor((SELECT_PANEL_MAX_HEIGHT - searchInputHeight) / matOptionHeight);
 
@@ -611,51 +632,39 @@ export class MatSelectSearchComponent implements OnInit, OnDestroy, ControlValue
       if( this.scrollElementClass )
       {
         this.matSelect.panel.nativeElement.scrollTop = 0;
-        console.log('this.scrollElementClass', this.scrollElementClass);
+        // console.log('this.scrollElementClass', this.scrollElementClass);
         const panel = this.matSelect.panel.nativeElement.querySelector('.' + this.scrollElementClass) as HTMLElement;
 
         const currentScrollTop = panel.scrollTop;
 
-        const indexOfFirstVisibleOption = Math.round(currentScrollTop / matOptionHeight);
-
-        console.log('matOptionHeight', matOptionHeight);
-        console.log('activeOptionIndex',activeOptionIndex);
-        console.log('labelCount',labelCount);
-        console.log('indexOfOptionToFitIntoView',indexOfOptionToFitIntoView);
-        console.log('currentScrollTop',currentScrollTop);
-        console.log('amountOfVisibleOptions',amountOfVisibleOptions);
-        console.log('indexOfFirstVisibleOption',indexOfFirstVisibleOption);
-        console.log('scroll1', (indexOfOptionToFitIntoView * matOptionHeight));
-        console.log('scroll2', ((indexOfOptionToFitIntoView + 1) * matOptionHeight - SELECT_PANEL_MAX_HEIGHT));
-
-        let requiredScrollTop = 0;
-        if (indexOfFirstVisibleOption >= indexOfOptionToFitIntoView) 
+        let indexOfFirstVisibleOption = indexOfOptionToFitIntoView - Math.round(amountOfVisibleOptions/2) ;//Math.round(currentScrollTop / matOptionHeight);
+        if(indexOfFirstVisibleOption < 0)
         {
-          requiredScrollTop = indexOfOptionToFitIntoView * matOptionHeight;
-        } 
-        else if (indexOfFirstVisibleOption + amountOfVisibleOptions <= indexOfOptionToFitIntoView) 
-        {
-          requiredScrollTop = (indexOfOptionToFitIntoView + 1) * matOptionHeight - SELECT_PANEL_MAX_HEIGHT;
+          indexOfFirstVisibleOption = 0;
         }
+
+        // console.log('matOptionHeight', matOptionHeight);
+        // console.log('activeOptionIndex',activeOptionIndex);
+        // console.log('labelCount',labelCount);
+        // console.log('indexOfOptionToFitIntoView',indexOfOptionToFitIntoView);
+        // console.log('currentScrollTop',currentScrollTop);
+        // console.log('amountOfVisibleOptions',amountOfVisibleOptions);
+        // console.log('indexOfFirstVisibleOption',indexOfFirstVisibleOption);
+        // console.log('scroll1', (indexOfOptionToFitIntoView * matOptionHeight));
+        // console.log('scroll2', ((indexOfOptionToFitIntoView + 1) * matOptionHeight - SELECT_PANEL_MAX_HEIGHT));
+
+        let requiredScrollTop = indexOfFirstVisibleOption * matOptionHeight;
 
         panel.scrollTop = requiredScrollTop;
         // above doesn't work, try again ...
-        console.log('panel.scrollTop', panel.scrollTop);
+        //console.log('panel.scrollTop', panel.scrollTop);
         setTimeout( () => {
           if(panel.scrollTop != requiredScrollTop)
           {
             panel.scrollTop = requiredScrollTop;
-            console.log('panel.scrollTop', panel.scrollTop);
+            //console.log('panel.scrollTop', panel.scrollTop);
           }
         }, 1);
-
-        // setTimeout( () => {
-        //   if(panel.scrollTop != requiredScrollTop)
-        //   {
-        //     panel.scrollTop = requiredScrollTop;
-        //     console.log('panel.scrollTop', panel.scrollTop);
-        //   }
-        // }, 100);
       }
       else
       {
