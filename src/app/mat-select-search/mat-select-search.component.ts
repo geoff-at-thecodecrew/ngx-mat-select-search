@@ -14,6 +14,7 @@ import {
   EventEmitter,
   forwardRef,
   HostBinding,
+  HostListener,
   Inject,
   Input,
   OnDestroy,
@@ -167,7 +168,7 @@ export class MatSelectSearchComponent implements OnInit, OnDestroy, ControlValue
    * Prevents home / end key being propagated to mat-select,
    * allowing to move the cursor within the search input instead of navigating the options
    */
-  @Input() preventHomeEndKeyPropagation = false;
+  @Input() preventHomeEndKeyPropagation = true;
 
   /** Disables scrolling to active options when option list changes. Useful for server-side search */
   @Input() disableScrollToActiveOnOptionsChanged = false;
@@ -211,6 +212,19 @@ export class MatSelectSearchComponent implements OnInit, OnDestroy, ControlValue
   get isInsideMatOption(): boolean {
     return !!this.matOption;
   }
+
+  @HostListener('keydown.control.home', ['$event']) onCtrlHome(event: KeyboardEvent) {
+    this.matSelect._keyManager.setFirstItemActive();
+  }  
+  @HostListener('keydown.control.end', ['$event']) onCtrlEnd(event: KeyboardEvent) {
+    this.matSelect._keyManager.setLastItemActive();
+  }  
+  @HostListener('keydown.control.pageup', ['$event']) onCtrlPageUp(event: KeyboardEvent) {
+    this.onCtrlPage(event);
+  }  
+  @HostListener('keydown.control.pagedown', ['$event']) onCtrlPageDown(event: KeyboardEvent) {
+    this.onCtrlPage(event);
+  }  
 
   /** Current search value */
   get value(): string {
@@ -440,12 +454,49 @@ export class MatSelectSearchComponent implements OnInit, OnDestroy, ControlValue
       event.stopPropagation();
     }
 
+    if(event.key === 'PageUp')
+    {
+      const matOptionHeight = this.getMatOptionHeight();
+      const activeOptionIndex = this.matSelect._keyManager.activeItemIndex || 0;
+      const labelCount = _countGroupLabelsBeforeOption(activeOptionIndex, this.matSelect.options, this.matSelect.optionGroups);
+      // If the component is in a MatOption, the activeItemIndex will be offset by one.
+      const indexOfOptionToFitIntoView = ((this.matOption && !this.scrollElementClass) ? -1 : 0) + labelCount + activeOptionIndex;
+      const searchInputHeight = this.innerSelectSearch.nativeElement.offsetHeight;
+      const amountOfVisibleOptions = Math.floor((SELECT_PANEL_MAX_HEIGHT - searchInputHeight) / matOptionHeight);
+      let newIndex = activeOptionIndex - amountOfVisibleOptions;
+      if( newIndex < 1 )
+      {
+        newIndex = 1;
+      }
+      this.matSelect._keyManager.setActiveItem(newIndex);
+    }
+    else if(event.key === 'PageDown')
+    {
+      const matOptionHeight = this.getMatOptionHeight();
+      const activeOptionIndex = this.matSelect._keyManager.activeItemIndex || 0;
+      const labelCount = _countGroupLabelsBeforeOption(activeOptionIndex, this.matSelect.options, this.matSelect.optionGroups);
+      // If the component is in a MatOption, the activeItemIndex will be offset by one.
+      const indexOfOptionToFitIntoView = ((this.matOption && !this.scrollElementClass) ? -1 : 0) + labelCount + activeOptionIndex;
+      const searchInputHeight = this.innerSelectSearch.nativeElement.offsetHeight;
+      const amountOfVisibleOptions = Math.floor((SELECT_PANEL_MAX_HEIGHT - searchInputHeight) / matOptionHeight);
+      let newIndex = activeOptionIndex + amountOfVisibleOptions;
+      if( newIndex > this.matSelect.options.length)
+      {
+        this.matSelect._keyManager.setLastItemActive();
+      }
+      else
+      {
+        this.matSelect._keyManager.setActiveItem(newIndex);
+      }
+    }
+
+
     // Prevent propagation for all alphanumeric characters in order to avoid selection issues
     if ((event.key && event.key.length === 1) ||
       (event.keyCode >= A && event.keyCode <= Z) ||
       (event.keyCode >= ZERO && event.keyCode <= NINE) ||
       (event.keyCode === SPACE)
-      || (this.preventHomeEndKeyPropagation && (event.keyCode === HOME || event.keyCode === END))
+      || (this.preventHomeEndKeyPropagation && !event.ctrlKey && (event.keyCode === HOME || event.keyCode === END))
     ) {
       event.stopPropagation();
     }

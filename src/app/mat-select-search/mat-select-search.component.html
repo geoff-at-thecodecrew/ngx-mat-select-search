@@ -23,8 +23,6 @@
          [type]="type"
          [formControl]="_formControl"
          #searchSelectInput
-         (keydown.control.pageup)='onCtrlPage($event)'
-         (keydown.control.pagedown)='onCtrlPage($event)'
          (keydown)="_handleKeydown($event)"
          (keyup)="_handleKeyup($event)"
          (blur)="onBlur()"
